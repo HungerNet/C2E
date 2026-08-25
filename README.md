@@ -1,31 +1,39 @@
-# ServerWatcher
-A highly configurable Minecraft server monitoring and restart engine for HungerBridge / Pterodactyl-based Minecraft servers.
+# RC3 — Runtime Console Command Core
 
-## System requirements
-|             | **Minimum** | **Recommended** |
-| ----------- | ----------- | --------------- | 
-|  **RAM**    |   128 MB    |      256 MB     |
-| **Storage** |   256 MB    |      1 GB       |
+RC3 is a lightweight, async‑friendly console command framework for Python.  
+It provides a raw‑mode terminal engine (`LiveCLI`) and a flexible command DSL for building interactive CLIs with subcommands, parameters, flags, and argument metadata.
 
-## Prerequisites
-**Pterodactyl Panel / API credentials**
-- You must have the server on a Pterodactyl Panel
-- You need a valid client API token
-**HungerBridge**
-- Install [HungerBridge from Modrinth](https://modrinth.com/project/hungerbridge) on the Minecraft server you wish to monitor
-- HungerBridge supports `Fabric`, `Quilt`, `Paper`, `Purpur`, and `Folia`
-**A dedicated Python environment**
-- ServerWatcher requires a Python 3.14+ environment to run
-*Discord bot*
-- Optional. The bot must have the correct endpoints set up.
-*Logging directory*
-- Optional. Only necessary if you want to use file logging.
+RC3 is extracted from the ServerWatcher CLI and generalized into a reusable standalone library.
+
+---
+
+## Features
+
+- **Async console loop**  
+  Uses `asyncio.to_thread` to keep the event loop responsive.
+
+- **Raw terminal input**  
+  Reads characters directly using `termios` and `tty.setraw`.
+
+- **Command DSL**  
+  Decorators for commands, children, parameters, flags, and argument metadata.
+
+- **Automatic help generation**  
+  Built‑in help for commands, subcommands, and argument‑level usage.
+
+- **Dynamic parameter/flag injection**  
+  Child functions receive parameter values and flag states via wrapped globals.
+
+- **View‑safe printing**  
+  `safePrint()` integrates with external buffer systems without breaking terminal output.
+
+- **Minimal dependencies**  
+  Only Python standard library + optional MapRes for color formatting.
+
+---
 
 ## Installation
-- Download the [**ServerWatcher Pterodactyl egg**](https://github.com/iFamishedX/ServerWatcher/blob/main/eggs/serverwatcher.json)
-- Import it into your desired nest in your panel
-- Create a server with the egg selected
-- Start the server and wait for instalation and file generation to finish
-- Configure the files in config/
-- Start the server again
-- You're done! Just let it do its thing.
+
+```bash
+pip install rc3
+```
