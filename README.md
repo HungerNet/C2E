@@ -1,9 +1,9 @@
-# RC3 — Runtime Console Command Core
+# C2E — Console Command Engine
 
-RC3 is a lightweight, async‑friendly console command framework for Python.  
+C2E is a lightweight, async‑friendly console command framework for Python.  
 It provides a raw‑mode terminal engine (`LiveCLI`) and a flexible command DSL for building interactive CLIs with subcommands, parameters, flags, and argument metadata.
 
-RC3 is extracted from the ServerWatcher CLI and generalized into a reusable standalone library.
+C2E is extracted from the ServerWatcher CLI and generalized into a reusable standalone library.
 
 ---
 
@@ -35,5 +35,5 @@ RC3 is extracted from the ServerWatcher CLI and generalized into a reusable stan
 ## Installation
 
 ```bash
-pip install rc3
+pip install c2e
 ```
