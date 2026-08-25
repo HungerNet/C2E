@@ -1,7 +1,9 @@
 run: true
-version: '1-dev.2'
+version: '1-dev.3'
 description: |
   Dev 1:
   - Initial scaffold
   Dev 2:
   - Update README
+  Dev 3:
+  - Test push

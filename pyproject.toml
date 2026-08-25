@@ -3,9 +3,9 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rc3"
+name = "c2e"
 version = "0.0.0"
-description = "RC3: Runtime Console Command Core"
+description = "C2E: Console Command Engine"
 readme = "README.md"
 requires-python = ">=3.14"
 license = { text = "GPL-3.0" }
@@ -43,10 +43,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/iFamishedX/RC3"
-Documentation = "https://github.com/iFamishedX/RC3"
-Source = "https://github.com/iFamishedX/RC3"
-Issues = "https://github.com/iFamishedX/RC3/issues"
+Homepage = "https://github.com/iFamishedX/C2E"
+Documentation = "https://github.com/iFamishedX/C2E"
+Source = "https://github.com/iFamishedX/C2E"
+Issues = "https://github.com/iFamishedX/C2E/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
