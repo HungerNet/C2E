@@ -42,10 +42,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/iFamishedX/C2E"
-Documentation = "https://github.com/iFamishedX/C2E"
-Source = "https://github.com/iFamishedX/C2E"
-Issues = "https://github.com/iFamishedX/C2E/issues"
+Homepage = "https://github.com/iFamished/C2E"
+Documentation = "https://github.com/iFamished/C2E"
+Source = "https://github.com/iFamished/C2E"
+Issues = "https://github.com/iFamished/C2E/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
