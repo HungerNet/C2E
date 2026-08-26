@@ -1,5 +1,5 @@
 run: true
-version: '1-dev.7'
+version: '1-dev.8'
 description: |
   Dev 1:
   - Initial scaffold
@@ -13,3 +13,5 @@ description: |
   - Update github username
   Dev 6-8:
   - Arbitrary version bump
+  Dev 9:
+  - Fix dsl
