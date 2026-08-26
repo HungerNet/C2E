@@ -1,5 +1,5 @@
 run: true
-version: '1-dev.6'
+version: '1-dev.7'
 description: |
   Dev 1:
   - Initial scaffold
@@ -11,5 +11,5 @@ description: |
   - Updated dependencies
   Dev 5:
   - Update github username
-  Dev 6:
+  Dev 6-7:
   - Arbitrary version bump
