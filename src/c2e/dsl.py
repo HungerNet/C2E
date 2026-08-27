@@ -48,16 +48,10 @@ class BaseSpec:
         self._parse_args_meta()
         self._infer_arg_requirement()
 
-    # ------------------------------
-    # Docstring extraction
-    # ------------------------------
     def _doc(self, f):
         d = f.__doc__
         return d.strip().splitlines()[0].strip() if d else None
 
-    # ------------------------------
-    # __args__ block extraction
-    # ------------------------------
     def _extract_args_block(self):
         src = inspect.getsource(self.func)
         lines = src.splitlines()
@@ -81,9 +75,6 @@ class BaseSpec:
             raw = '\n'.join(l.strip() for l in block)
             setattr(self.func, '__args__', raw)
 
-    # ------------------------------
-    # Parse __args__ metadata
-    # ------------------------------
     def _parse_args_meta(self):
         raw = getattr(self.func, '__args__', None)
         if not raw:
@@ -125,9 +116,6 @@ class BaseSpec:
 
             self.args_meta[arg] = ArgMeta(arg, params, flags, req_p, req_f)
 
-    # ------------------------------
-    # Infer required/optional positional arg
-    # ------------------------------
     def _infer_arg_requirement(self):
         sig = inspect.signature(self.func)
         ps = list(sig.parameters.values())
@@ -147,9 +135,6 @@ class BaseSpec:
             self.requires_arg = False
             self.optional_arg = False
 
-    # ------------------------------
-    # Param decorator
-    # ------------------------------
     def param(self, name, type=str, default=None):
         def deco(f):
             py = name.replace('-', '_')
@@ -158,9 +143,6 @@ class BaseSpec:
             return f
         return deco
 
-    # ------------------------------
-    # Flag decorator
-    # ------------------------------
     def flag(self, name):
         def deco(f):
             py = name.replace('-', '_')
@@ -170,20 +152,12 @@ class BaseSpec:
         return deco
 
 
-# ------------------------------------------------------------
-# ChildSpec (inherits BaseSpec)
-# ------------------------------------------------------------
-
 class ChildSpec(BaseSpec):
     def __init__(self, parent, name, func):
         self.parent = parent
         self.name = name
         super().__init__(func)
 
-
-# ------------------------------------------------------------
-# CommandSpec (inherits BaseSpec)
-# ------------------------------------------------------------
 
 class CommandSpec(BaseSpec):
     def __init__(self, name, func, namespace=False):
@@ -201,10 +175,6 @@ class CommandSpec(BaseSpec):
         return deco
 
 
-# ------------------------------------------------------------
-# DSL entry point
-# ------------------------------------------------------------
-
 class CommandDSL:
     def __call__(self, name, namespace=False):
         def deco(f):
@@ -216,10 +186,6 @@ class CommandDSL:
 command = CommandDSL()
 
 
-# ------------------------------------------------------------
-# ParsedArgs structure
-# ------------------------------------------------------------
-
 @dataclass
 class ParsedArgs:
     sub: str | None
@@ -227,10 +193,6 @@ class ParsedArgs:
     flags: dict[str, bool]
     params: dict[str, str]
 
-
-# ------------------------------------------------------------
-# Line parser
-# ------------------------------------------------------------
 
 def parse_line(raw):
     raw = raw.strip()
@@ -255,15 +217,12 @@ def parse_line(raw):
     return ParsedArgs(sub, pos, flags, params)
 
 
-# ------------------------------------------------------------
-# Help generation (unchanged)
-# ------------------------------------------------------------
-
 def help_command(cmd):
     lines = []
     d = cmd.desc or 'No description'
     lines.append(res(f'<bold><yellow>{cmd.name}<reset>: <gray>{d}<reset>'))
 
+    # Usage
     if cmd.children:
         if cmd.is_namespace:
             u = res(f'<aqua>Usage:<reset> <gold>{cmd.name}<reset> <dark_gray>\\<<reset>child<dark_gray>\\><reset>')
@@ -271,12 +230,38 @@ def help_command(cmd):
             u = res(f'<aqua>Usage:<reset> <gold>{cmd.name}<reset> <dark_gray>[<reset>child<dark_gray>]<reset>')
     else:
         u = res(f'<aqua>Usage:<reset> <gold>{cmd.name}<reset>')
-
-    if cmd.flags:
-        u += res(' <dark_gray>[<reset>--flags<dark_gray>]<reset>')
-
+        if cmd.args_meta:
+            u += res(' <dark_gray>\\<<reset>arg<dark_gray>\\><reset>')
+        if cmd.params:
+            u += res(' <dark_gray>[<reset>params<dark_gray>]<reset>')
+        if cmd.flags:
+            u += res(' <dark_gray>[<reset>--flags<dark_gray>]<reset>')
     lines.append(u)
 
+    # Args (for commands without children)
+    if cmd.args_meta:
+        lines.append('')
+        lines.append(res('\0    <light_purple>Args:<reset>'))
+        for a, m in cmd.args_meta.items():
+            parts = [res(f'<green>{a}<reset>')]
+            for pn in m.params:
+                parts.append(res(f'<dark_gray>[<reset>{pn}<dark_gray>]<reset>'))
+            for fn in m.flags:
+                parts.append(res(f'<dark_gray>[<reset>--{fn}<dark_gray>]<reset>'))
+            lines.append('\0        ' + ' '.join(parts))
+
+    # Params
+    if cmd.params:
+        lines.append('')
+        lines.append(res('\0    <light_purple>Params:<reset>'))
+        for n, ps in cmd.params.items():
+            t = ps.type_.__name__
+            d = ps.desc or 'No description'
+            lines.append(
+                res(f'\0        <blue>{n}<reset> (type=<gold>{t}<reset>, default=<gray>{ps.default}<reset>): <gray>{d}<reset>')
+            )
+
+    # Flags
     if cmd.flags:
         lines.append('')
         lines.append(res('\0    <light_purple>Flags:<reset>'))
@@ -284,6 +269,7 @@ def help_command(cmd):
             d = fs.desc or 'No description'
             lines.append(res(f'\0        <blue>--{fs.name}<reset>: <gray>{d}<reset>'))
 
+    # Children
     if cmd.children:
         lines.append('')
         lines.append(res('\0    <light_purple>Children:<reset>'))

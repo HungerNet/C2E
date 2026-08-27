@@ -2,6 +2,57 @@ from mapres import res
 from .dsl import COMMANDS, parse_line, help_command, help_child, help_arg
 
 
+def help_cmd_arg(cmd, meta):
+    lines = []
+    a = meta.name
+    lines.append(res(f'<bold><aqua>{a}<reset>: <gray>Retrieve and print the {a} of the server<reset>'))
+
+    u = res(f'<aqua>Usage:<reset> <gold>{cmd.name}<reset> <aqua>{a}<reset>')
+    req = []
+    opt = []
+
+    for pn in meta.params:
+        ps = cmd.params.get(pn)
+        t = ps.type_.__name__ if ps else 'str'
+        if pn in meta.required_params:
+            req.append(res(f'<dark_gray>\\<<reset>{pn}:{t}<dark_gray>\\><reset>'))
+        else:
+            opt.append(res(f'<dark_gray>[<reset>{pn}:{t}<dark_gray>]<reset>'))
+
+    if req:
+        u += ' ' + ' '.join(req)
+    if opt:
+        u += ' ' + ' '.join(opt)
+    if meta.flags:
+        u += res(' <dark_gray>[<reset>--flags<dark_gray>]<reset>')
+    lines.append(u)
+
+    if meta.params:
+        lines.append('')
+        lines.append(res('\0    <light_purple>Params:<reset>'))
+        for pn in meta.params:
+            ps = cmd.params.get(pn)
+            if not ps:
+                continue
+            t = ps.type_.__name__
+            d = ps.desc or 'No description'
+            lines.append(
+                res(f'\0        <blue>{pn}<reset> (type=<gold>{t}<reset>, default=<gray>{ps.default}<reset>): <gray>{d}<reset>')
+            )
+
+    if meta.flags:
+        lines.append('')
+        lines.append(res('\0    <light_purple>Flags:<reset>'))
+        for fn in meta.flags:
+            fs = cmd.flags.get(fn)
+            if not fs:
+                continue
+            d = fs.desc or 'No description'
+            lines.append(res(f'\0        <blue>--{fn}<reset>: <gray>{d}<reset>'))
+
+    return '\n'.join(lines)
+
+
 def dispatch(cli, line):
     p = parse_line(line)
     if not p.sub:
@@ -11,9 +62,13 @@ def dispatch(cli, line):
     if not cmd:
         return cli.safePrint(res(f'<red>Error:<reset> <gray>Unknown command {p.sub}<reset>'))
 
+    # top-level help (no args)
     if 'help' in p.flags and not p.pos:
         return cli.safePrint(help_command(cmd))
 
+    # ------------------------------------------------------------
+    # CASE 1: command has children → existing child logic
+    # ------------------------------------------------------------
     if cmd.children:
         if not p.pos:
             return cli.safePrint(res('<red>Error:<reset> <gray>Missing subcommand<reset>'))
@@ -23,7 +78,6 @@ def dispatch(cli, line):
         if not child:
             return cli.safePrint(res(f'<red>Error:<reset> <gray>Unknown subcommand {cname}<reset>'))
 
-        # child help
         if 'help' in p.flags and len(p.pos) == 1:
             return cli.safePrint(help_child(child))
 
@@ -40,7 +94,6 @@ def dispatch(cli, line):
                 res(f'<red>Error:<reset> <gray>Subcommand {child.name} requires an argument<reset>')
             )
 
-        # bind params/flags into child.func globals
         g = child.func.__globals__
 
         for n, ps in child.params.items():
@@ -74,8 +127,9 @@ def dispatch(cli, line):
             return f(cli, arg)
         return f(cli)
 
-    # This is the path your `stats` command should use.
-    # p.pos[0] is the "arg" (e.g. ram/cpu/uptime/...)
+    # ------------------------------------------------------------
+    # CASE 2: command has NO children → treat like child
+    # ------------------------------------------------------------
     arg = p.pos[0] if p.pos else None
 
     # arg-level help for top-level commands
@@ -83,8 +137,10 @@ def dispatch(cli, line):
         meta = cmd.args_meta.get(arg)
         if not meta:
             return cli.safePrint(res(f'<red>Error:<reset> <gray>Unknown argument {arg}<reset>'))
-        # reuse help_arg, pretending cmd is a "child" of a synthetic parent
-        # or write a dedicated help if you want; for now we just show command help
+        return cli.safePrint(help_cmd_arg(cmd, meta))
+
+    # command-level help (no arg)
+    if 'help' in p.flags and arg is None:
         return cli.safePrint(help_command(cmd))
 
     if cmd.requires_arg and arg is None:
@@ -92,7 +148,6 @@ def dispatch(cli, line):
             res(f'<red>Error:<reset> <gray>Command {cmd.name} requires an argument<reset>')
         )
 
-    # bind params/flags into cmd.func globals
     g = cmd.func.__globals__
 
     for n, ps in cmd.params.items():
