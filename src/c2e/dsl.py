@@ -231,7 +231,10 @@ def help_command(cmd):
     else:
         u = res(f'<aqua>Usage:<reset> <gold>{cmd.name}<reset>')
         if cmd.args_meta:
-            u += res(' <dark_gray>\\<<reset>arg<dark_gray>\\><reset>')
+            if cmd.requires_arg:
+                u += res(' <dark_gray>\\<<reset>arg<dark_gray>\\><reset>')
+            elif cmd.optional_arg:
+                u += res(' <dark_gray>[<reset>arg<dark_gray>]<reset>')
         if cmd.params:
             u += res(' <dark_gray>[<reset>params<dark_gray>]<reset>')
         if cmd.flags:
