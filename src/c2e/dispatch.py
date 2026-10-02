@@ -1,3 +1,7 @@
+import argparse
+import inspect
+import sys
+
 from mapres import res
 from .dsl import COMMANDS, parse_line, help_command, help_child, help_arg
 
@@ -180,3 +184,100 @@ def dispatch(cli, line):
     if f.__code__.co_argcount >= 2:
         return f(cli, arg)
     return f(cli)
+
+
+def dispatch_argv(cli, argv=None, *, prog='c2e', description=None, default_command=None):
+    """Dispatch process-style argv while leaving the interactive parser unchanged."""
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if (
+        default_command
+        and arguments
+        and arguments[0] not in COMMANDS
+        and arguments[0] not in {'-h', '--help'}
+    ):
+        arguments.insert(0, default_command)
+
+    parser = argparse.ArgumentParser(prog=prog, description=description)
+    subparsers = parser.add_subparsers(dest='_c2e_command', required=True)
+
+    def add_options(command_parser, spec):
+        signature = inspect.signature(spec.func)
+        positional_parameters = list(signature.parameters.values())[1:]
+        positional_parameters = [
+            parameter
+            for parameter in positional_parameters
+            if parameter.kind in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
+        ]
+
+        for parameter in positional_parameters:
+            annotation = parameter.annotation
+            argument_type = annotation if isinstance(annotation, type) else str
+            options = {'type': argument_type}
+            if parameter.default is not inspect.Parameter.empty:
+                options['nargs'] = '?'
+                options['default'] = parameter.default
+            command_parser.add_argument(parameter.name, **options)
+
+        for name, param in spec.params.items():
+            command_parser.add_argument(
+                f'--{param.name}',
+                dest=name,
+                type=param.type_,
+                default=param.default,
+                help=param.desc,
+            )
+
+        for name, flag in spec.flags.items():
+            command_parser.add_argument(
+                f'--{flag.name}',
+                dest=name,
+                action='store_true',
+                help=flag.desc,
+            )
+
+        command_parser.set_defaults(_c2e_spec=spec)
+
+    for spec in COMMANDS.values():
+        command_parser = subparsers.add_parser(spec.name, help=spec.desc)
+        if spec.children:
+            children = command_parser.add_subparsers(dest='_c2e_child', required=True)
+            for child in spec.children.values():
+                child_parser = children.add_parser(child.name, help=child.desc)
+                add_options(child_parser, child)
+        else:
+            add_options(command_parser, spec)
+
+    parsed = parser.parse_args(arguments)
+    spec = parsed._c2e_spec
+    signature = inspect.signature(spec.func)
+    positional_names = [
+        parameter.name
+        for parameter in list(signature.parameters.values())[1:]
+        if parameter.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ]
+    positional_values = [getattr(parsed, name) for name in positional_names]
+
+    globals_ = spec.func.__globals__
+    for name, param in spec.params.items():
+        value = getattr(parsed, name)
+
+        def wrap(func=param.func, val=value):
+            return func(val)
+
+        globals_[name] = wrap
+
+    for name, flag in spec.flags.items():
+        present = getattr(parsed, name)
+
+        def wrap(func=flag.func, enabled=present):
+            return func(enabled)
+
+        globals_[name] = wrap
+
+    return spec.func(cli, *positional_values)

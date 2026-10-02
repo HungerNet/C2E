@@ -24,6 +24,10 @@ C2E is extracted from the ServerWatcher CLI and generalized into a reusable stan
 - **Dynamic parameter/flag injection**  
   Child functions receive parameter values and flag states via wrapped globals.
 
+- **One-shot argv dispatch**
+  `LiveCLI.run_argv()` maps the same command DSL to conventional shell arguments
+  without changing the existing interactive parser.
+
 - **View‑safe printing**  
   `safePrint()` integrates with external buffer systems without breaking terminal output.
 
@@ -37,3 +41,24 @@ C2E is extracted from the ServerWatcher CLI and generalized into a reusable stan
 ```bash
 pip install c2e
 ```
+
+## Process Arguments
+
+Use `run_argv()` to dispatch a single command with normal positional arguments,
+`--options`, and boolean flags:
+
+```python
+from c2e import LiveCLI, command
+
+
+@command('greet')
+def greet(cli, name: str):
+  cli.safePrint(f'Hello, {name}!')
+
+
+if __name__ == '__main__':
+  LiveCLI().run_argv(prog='example')
+```
+
+Existing `LiveCLI.onecmd()` and interactive `parse_line()` behavior remains
+available unchanged.

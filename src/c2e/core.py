@@ -4,7 +4,7 @@ import termios
 import tty
 import asyncio
 
-from .dispatch import dispatch
+from .dispatch import dispatch, dispatch_argv
 
 
 class LiveCLI(cmd.Cmd):
@@ -52,3 +52,13 @@ class LiveCLI(cmd.Cmd):
 
     def onecmd(self, line):
         return dispatch(self, line)
+
+    def run_argv(self, argv=None, *, prog='c2e', description=None, default_command=None):
+        """Run a one-shot command from process-style argv."""
+        return dispatch_argv(
+            self,
+            argv,
+            prog=prog,
+            description=description,
+            default_command=default_command,
+        )
